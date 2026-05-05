@@ -11,7 +11,7 @@ st.set_page_config(page_title="Customer Segmentation", layout="wide")
 
 # Title
 st.title("🍔 Customer Segmentation Dashboard")
-st.markdown("### Analyze customer behavior using ML clustering")
+st.markdown("### Analyze customer behavior using Machine Learning Clustering")
 
 # Load models
 scaler = pickle.load(open("scaler.pkl", "rb"))
@@ -25,7 +25,7 @@ df = pd.read_csv("train.csv")
 st.sidebar.header("⚙️ Controls")
 show_data = st.sidebar.checkbox("Show Raw Data", True)
 
-# Feature Engineering
+# Feature Engineering (Demo purpose)
 np.random.seed(42)
 df['Age'] = np.random.randint(18, 60, len(df))
 df['TotalOrders'] = np.random.randint(1, 50, len(df))
@@ -41,48 +41,93 @@ X_pca = pca.transform(X_scaled)
 clusters = kmeans.predict(X_scaled)
 df['Cluster'] = clusters
 
-# Metrics row
+# 🔥 Human-friendly labels
+cluster_labels = {
+    0: "💰 Budget Customers",
+    1: "👑 Premium Customers",
+    2: "📱 Regular Users"
+}
+df['Customer Segment'] = df['Cluster'].map(cluster_labels)
+
+# ===========================
+# 📊 Metrics Section
+# ===========================
 col1, col2, col3 = st.columns(3)
 
-col1.metric("Total Customers", len(df))
-col2.metric("Clusters", len(set(clusters)))
+col1.metric("👥 Total Customers", len(df))
+col2.metric("🧩 Customer Segments", len(set(clusters)))
 
 score = silhouette_score(X_scaled, clusters)
-col3.metric("Silhouette Score", f"{score:.3f}")
+col3.metric("📈 Model Score", f"{score:.3f}")
 
-# Show dataset
+# ===========================
+# 📊 Dataset Preview
+# ===========================
 if show_data:
     st.subheader("📊 Dataset Preview")
     st.dataframe(df.head())
 
-# Graph Section
-st.subheader("📍 Customer Segmentation (PCA)")
+# ===========================
+# 📍 PCA Visualization
+# ===========================
+st.subheader("📍 Customer Segments Visualization")
 
 fig, ax = plt.subplots(figsize=(7,5))
 scatter = ax.scatter(X_pca[:,0], X_pca[:,1], c=clusters, cmap='viridis')
-ax.set_xlabel("PCA1")
-ax.set_ylabel("PCA2")
-ax.set_title("KMeans Clustering")
+
+ax.set_xlabel("PCA Component 1")
+ax.set_ylabel("PCA Component 2")
+ax.set_title("Customer Segmentation using K-Means")
+
+# Legend for non-technical users
+for i in np.unique(clusters):
+    ax.scatter([], [], label=cluster_labels[i])
+ax.legend(title="Customer Segment")
+
 st.pyplot(fig)
 
-# Cluster Distribution
-st.subheader("📊 Cluster Distribution")
-cluster_counts = df['Cluster'].value_counts()
-st.bar_chart(cluster_counts)
+# ===========================
+# 📊 Distribution
+# ===========================
+st.subheader("📊 Customer Segment Distribution")
+st.bar_chart(df['Customer Segment'].value_counts())
 
-# Cluster Insights
-st.subheader("📈 Cluster Analysis")
-st.dataframe(df.groupby('Cluster')[features].mean())
+# ===========================
+# 📈 Analysis Table
+# ===========================
+st.subheader("📈 Segment-wise Customer Analysis")
+st.dataframe(df.groupby('Customer Segment')[features].mean())
 
-# Business Insights
+# ===========================
+# 🧠 Business Insights
+# ===========================
 st.subheader("🧠 Business Insights")
 
-st.info("""
-🔹 Cluster 0 → Low spenders → Offer discounts  
-🔹 Cluster 1 → High spenders → Loyalty programs  
-🔹 Cluster 2 → Frequent users → Personalized recommendations  
+col1, col2, col3 = st.columns(3)
+
+col1.info("""
+💰 **Budget Customers**
+- Spend less money  
+- Highly price-sensitive  
+👉 Strategy: Provide discounts and offers
 """)
 
+col2.success("""
+👑 **Premium Customers**
+- High spending users  
+- Loyal and valuable customers  
+👉 Strategy: Loyalty programs and exclusive perks
+""")
+
+col3.warning("""
+📱 **Regular Users**
+- Frequently use the app  
+- Moderate spending behavior  
+👉 Strategy: Personalized recommendations
+""")
+
+# ===========================
 # Footer
+# ===========================
 st.markdown("---")
-st.caption("Developed using Streamlit | ML Project")
+st.caption("🚀 Developed using Streamlit | Customer Segmentation ML Project")
